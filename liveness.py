@@ -55,3 +55,72 @@ for i in range(len(Blocks)):
         Blocks[i]['flow'].append("exit")
 
 print(Blocks)   
+
+
+Use = []
+Def = []
+In = []
+Out = []
+
+operators = ['+', '-', '*', '/', '%', '==', '!=', '>', '<', '>=', '<=']
+
+for i in range(len(Blocks)):
+    Use.append(set())
+    Def.append(set())
+    In.append(set())
+    Out.append(set())
+    lhs = []
+    for j in range(len(Blocks[i]['block'])):
+        if Blocks[i]['block'][j].startswith("if"):
+            continue
+        # elif Blocks[i]['block'][j].startswith("goto"):
+        #     Use[i].add(re.search(r'\((.*?)\)', Blocks[i]['block'][j]).group(1))
+        # elif Blocks[i]['block'][j].startswith("call"):
+        #     Use[i].add(re.search(r'\((.*?)\)', Blocks[i]['block'][j]).group(1))
+        # elif Blocks[i]['block'][j].startswith("return"):
+        #     Use[i].add(re.search(r'\((.*?)\)', Blocks[i]['block'][j]).group(1))
+        # elif Blocks[i]['block'][j].startswith("print"):
+        #     Use[i].add(re.search(r'\((.*?)\)', Blocks[i]['block'][j]).group(1))
+        # elif Blocks[i]['block'][j].startswith("read"):
+        #     Use[i].add(re.search(r'\((.*?)\)', Blocks[i]['block'][j]).group(1))
+        # elif Blocks[i]['block'][j].startswith("param"):
+        #     Use[i].add(re.search(r'\((.*?)\)', Blocks[i]['block'][j]).group(1))
+        # elif Blocks[i]['block'][j].startswith("func"):
+        #     Use[i].add(re.search(r'\((.*?)\)', Blocks[i]['block'][j]).group(1))
+        # elif Blocks[i]['block'][j].startswith("label"):
+        #     Use[i].add(re.search(r'\((.*?)\)', Blocks[i]['block'][j]).group(1))
+        # elif Blocks[i]['block'][j].startswith("return"):
+        #     Use[i].add(re.search(r'\((.*?)\)', Blocks[i]['block'][j]).group(1))
+        # elif Blocks[i]['block'][j].startswith("end"):
+        #     Use[i].add(re.search(r'\((.*?)\)', Blocks[i]['block'][j]).group(1))
+        else:
+            if "=" in Blocks[i]['block'][j]:
+                tmp_def = Blocks[i]['block'][j].split("=")[0].strip()
+                # Def[i].add(Blocks[i]['block'][j].split("=")[0].strip())
+                lhs.append(Blocks[i]['block'][j].split("=")[0].strip())
+                rhs = Blocks[i]['block'][j].split("=")[1].strip().split()
+                rhs_copy = []
+                # remove all the operators from the rhs
+                size = len(rhs)
+                for k in range(size):
+                    if rhs[k] in operators or rhs[k].isnumeric():
+                        continue
+                    else:
+                        try:
+                            float(rhs[k])
+                            continue
+                        except:
+                            rhs_copy.append(rhs[k])
+                            continue
+                for k in range(len(rhs_copy)):
+                    if i == 0:
+                        Use[i].add(rhs_copy[k])
+                    elif rhs_copy[k] not in Def[i]:
+                        Use[i].add(rhs_copy[k])
+                Def[i].add(tmp_def)
+            else:
+                Use[i].add(Blocks[i]['block'][j].strip())
+            
+
+print("Use: ", Use)
+print("Def: ", Def)
