@@ -1,8 +1,9 @@
 import re
 import networkx as nx
 import matplotlib.pyplot as plt
+import copy
 
-with open("IR.txt", "r") as f:
+with open("IR.ir", "r") as f:
     IR = f.read()
     IR = IR.strip().split("\n")
     # print(IR)
@@ -67,10 +68,12 @@ for i in range(len(Blocks)):
                      Blocks[i]['flow'].append(j+1)
         Blocks[i]['flow'].append("exit")
 
-for i in range(len(Blocks)):
-    print("Block " + str(i+1) + ":")
-    print(Blocks[i]['flow'])
-    print()
+
+
+# for i in range(len(Blocks)):
+#     print("Block " + str(i+1) + ":")
+#     print(Blocks[i]['flow'])
+#     print()
 
 
 Use = []
@@ -88,8 +91,8 @@ for i in range(len(Blocks)):
     for j in range(len(Blocks[i]['block'])):
         if Blocks[i]['block'][j].startswith("if"):
             continue
-        # elif Blocks[i]['block'][j].startswith("goto"):
-        #     Use[i].add(re.search(r'\((.*?)\)', Blocks[i]['block'][j]).group(1))
+        elif Blocks[i]['block'][j].startswith("goto"):
+            continue
         # elif Blocks[i]['block'][j].startswith("call"):
         #     Use[i].add(re.search(r'\((.*?)\)', Blocks[i]['block'][j]).group(1))
         # elif Blocks[i]['block'][j].startswith("return"):
@@ -135,8 +138,8 @@ for i in range(len(Blocks)):
             else:
                 Use[i].add(Blocks[i]['block'][j].strip())
 
-print("Use: ", Use)
-print("Def: ", Def)            
+# print("Use: ", Use)
+# print("Def: ", Def)            
 
 # IN = USE union (OUT - DEF)
 # OUT = union (IN) for successive INs
@@ -153,10 +156,10 @@ for i in range(no_of_blocks):
             else:
                 Out[j] = Out[j] | In[k-1]
 
-print("Use: ", Use)
-print("Def: ", Def)
-print("In: ", In)
-print("Out: ", Out)
+# print("Use: ", Use)
+# print("Def: ", Def)
+# print("In: ", In)
+# print("Out: ", Out)
 
 Graph = nx.Graph()
 
@@ -168,7 +171,10 @@ for block_number in range(no_of_blocks):
             Adj[node] = set()
         Adj[node] = Adj[node] | (In[block_number] - set(node))
 
-print("Adj: ", Adj)
+# remove self loops
+for node in Adj:
+    if node in Adj[node]:
+        Adj[node].remove(node)
 
 
 edges = []
@@ -184,6 +190,159 @@ Graph.add_edges_from(edges)
 
 options = {"edgecolors": "tab:gray", "node_size": 800, "alpha": 0.9}
 
-nx.draw_networkx(Graph, with_labels=True, **options)
 
-plt.show()
+
+position = nx.spring_layout(Graph)
+nx.draw(Graph, with_labels=True, font_weight='bold', **options, pos=position)
+
+plt.savefig("interference_graph.png")
+
+
+# TODO: live_intervals = {}
+
+
+
+# CHAITIN'S ALGORITHM: 
+
+def correctIR_help(line_of_insert):
+    with open("IR.ir", "r") as f:
+        lines = f.readlines()
+    for line_no in range(line_of_insert, len(lines)):
+        if "goto" in lines[line_no]:
+            goto_number = re.search(r'\((.*?)\)', Blocks[i]['block'][-1]).group(1)
+            if goto_number >= line_of_insert:
+                goto_number += 1
+                lines[line_no] = lines[line_no].replace(re.search(r'\((.*?)\)', Blocks[i]['block'][-1]).group(1), str(goto_number))
+
+def correctIR():
+    with open("IR.ir", "r") as f:
+        lines = f.readlines()
+    for line_no in range(len(lines)):
+        if "load" in lines[line_no] or "store" in lines[line_no]:
+            correctIR_help(line_no)
+
+
+stack = []
+Adj_copy = copy.deepcopy(Adj)
+number_of_registers = 2
+
+# print("Adj_copy: ", Adj_copy)
+# print("nodes: ", nodes)
+
+removed = False
+
+while len(Adj_copy) > 0:
+    removed = False
+    for node in nodes:
+        if node in Adj_copy and len(Adj_copy[node]) < number_of_registers:
+            if node in stack:
+                continue
+            stack.append(node)
+            for neighbour in Adj[node]:
+                if neighbour in Adj_copy:
+                    Adj_copy[neighbour].remove(node)
+            Adj_copy.pop(node)
+            removed = True
+    if not removed and len(Adj_copy) > 0:
+        # Spill (optimistic coloring)
+        spill_node = list(Adj_copy.keys())[0]
+        stack.append(spill_node)
+        tmp = Adj[spill_node].copy()
+        for neighbour in tmp:
+            if neighbour in Adj_copy:
+                Adj_copy[neighbour] = Adj_copy[neighbour] - set(spill_node)
+        Adj_copy.pop(spill_node)
+
+
+
+New_Graph = nx.Graph()
+
+New_Adj = {}
+node_colors = {}
+
+colors = [f'r{i}' for i in range(number_of_registers)]
+
+success = True
+
+stack = reversed(stack)
+
+failed_node = 'none'
+
+for node in stack:
+    # Check if node can be assigned a color
+    for color in colors:
+        if color in [node_colors[new_node] for new_node in Adj[node] if new_node in New_Adj]:
+            continue
+        else:
+            node_colors[node] = color
+            break
+    
+    # Check if color was assigned
+    if node not in node_colors:
+        # Spill
+        print("Spilled")
+        success = False
+        failed_node = node
+        break
+    
+    New_Adj[node] = set()
+    
+    for new_node in New_Adj:
+        if node in Adj[new_node]:
+            New_Adj[node].add(new_node)
+            New_Adj[new_node].add(node)
+
+# Spill
+
+count = 0
+lineskip = 0
+if not success:
+    #open file with read/write permissions
+    f = open("IR.ir", "r+")
+    lines = f.readlines()
+
+    flag = False
+    for inst in Blocks:
+        flag = False
+
+        if failed_node in Use[inst['leader']-1] : 
+            print("line number: ", inst['leader'] - 1)
+            line_number = inst['leader'] - 1
+            load_string = "load &" + failed_node + " " + failed_node + str(count) + "\n"
+            lines.insert(line_number - 1, load_string)
+            lines[line_number + lineskip] = lines[line_number + lineskip].replace(failed_node, failed_node + str(count))
+            lineskip += 1
+            flag = True
+
+        if failed_node in Def[inst['leader']-1] : 
+            line_number = inst['leader'] - 1
+            store_string = "store &" + failed_node + " " + failed_node + str(count) + "\n"
+            lines.insert(line_number + lineskip + 1, store_string)
+            lines[line_number + lineskip] = lines[line_number + lineskip].replace(failed_node, failed_node + str(count))
+            lineskip += 1
+            flag = True
+        
+        if flag:
+            count += 1
+    
+    # update file with lines
+    f.seek(0)
+    f.writelines(lines)
+    f.truncate()
+    f.close()
+
+
+
+            
+            
+    
+
+
+
+
+
+
+
+
+
+
