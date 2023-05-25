@@ -1,4 +1,6 @@
 import re
+import networkx as nx
+import matplotlib.pyplot as plt
 
 with open("IR.txt", "r") as f:
     IR = f.read()
@@ -54,7 +56,7 @@ for i in range(len(Blocks)):
         Blocks[i]['flow'] = []
         Blocks[i]['flow'].append("exit")
 
-print(Blocks)   
+# print(Blocks)   
 
 
 Use = []
@@ -69,7 +71,6 @@ for i in range(len(Blocks)):
     Def.append(set())
     In.append(set())
     Out.append(set())
-    lhs = []
     for j in range(len(Blocks[i]['block'])):
         if Blocks[i]['block'][j].startswith("if"):
             continue
@@ -79,8 +80,8 @@ for i in range(len(Blocks)):
         #     Use[i].add(re.search(r'\((.*?)\)', Blocks[i]['block'][j]).group(1))
         # elif Blocks[i]['block'][j].startswith("return"):
         #     Use[i].add(re.search(r'\((.*?)\)', Blocks[i]['block'][j]).group(1))
-        # elif Blocks[i]['block'][j].startswith("print"):
-        #     Use[i].add(re.search(r'\((.*?)\)', Blocks[i]['block'][j]).group(1))
+        elif Blocks[i]['block'][j].startswith("print"):
+            Use[i].add(re.search(r'\((.*?)\)', Blocks[i]['block'][j]).group(1))
         # elif Blocks[i]['block'][j].startswith("read"):
         #     Use[i].add(re.search(r'\((.*?)\)', Blocks[i]['block'][j]).group(1))
         # elif Blocks[i]['block'][j].startswith("param"):
@@ -97,7 +98,6 @@ for i in range(len(Blocks)):
             if "=" in Blocks[i]['block'][j]:
                 tmp_def = Blocks[i]['block'][j].split("=")[0].strip()
                 # Def[i].add(Blocks[i]['block'][j].split("=")[0].strip())
-                lhs.append(Blocks[i]['block'][j].split("=")[0].strip())
                 rhs = Blocks[i]['block'][j].split("=")[1].strip().split()
                 rhs_copy = []
                 # remove all the operators from the rhs
@@ -111,16 +111,63 @@ for i in range(len(Blocks)):
                             continue
                         except:
                             rhs_copy.append(rhs[k])
-                            continue
-                for k in range(len(rhs_copy)):
-                    if i == 0:
-                        Use[i].add(rhs_copy[k])
-                    elif rhs_copy[k] not in Def[i]:
-                        Use[i].add(rhs_copy[k])
+
+                # print(rhs_copy)
+                if j == 0 :
+                    Use[i] = Use[i] | set(rhs_copy)
+                else :
+                    Use[i] = Use[i] | (set(rhs_copy) - Def[i])
                 Def[i].add(tmp_def)
             else:
                 Use[i].add(Blocks[i]['block'][j].strip())
             
 
+# IN = USE union (OUT - DEF)
+# OUT = union (IN) for successive INs
+
+# find the number of blocks
+no_of_blocks = len(leader)
+
+for i in range(no_of_blocks):
+    for j in range(no_of_blocks):
+        In[j] = Use[j] | (Out[j] - Def[j])
+        for k in (Blocks[j]['flow']):
+            if k == 'exit' :
+                continue
+            else:
+                Out[j] = Out[j] | In[k-1]
+
 print("Use: ", Use)
 print("Def: ", Def)
+print("In: ", In)
+print("Out: ", Out)
+
+Graph = nx.Graph()
+
+Adj = {} 
+
+for block_number in range(no_of_blocks):
+    for node in In[block_number]:    
+        if node not in Adj:
+            Adj[node] = set()
+        Adj[node] = Adj[node] | (In[block_number] - set(node))
+
+print("Adj: ", Adj)
+
+
+edges = []
+nodes = []
+
+for node in Adj:
+    nodes.append(node)
+    for neighbour in Adj[node]:
+        edges.append((node, neighbour))
+
+Graph.add_nodes_from(nodes)
+Graph.add_edges_from(edges)
+
+options = {"edgecolors": "tab:gray", "node_size": 800, "alpha": 0.9}
+
+nx.draw_networkx(Graph, with_labels=True, **options)
+
+plt.show()

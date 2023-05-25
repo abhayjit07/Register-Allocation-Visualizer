@@ -1,10 +1,8 @@
-a= 'apple + banana * carrot + watermelon % 2'
-b = '4.5'
+a = {2, 4, 5, 7}
+b = {2, 4, 5, 7, 8}
+c = {2, 4, 5, 8, 9}
+d = {2, 4, 5, 8, 9, 10}
 
-print((b.isdigit()))
-# check if b is a float
-try:
-    float(b)
-    print("float")
-except ValueError:
-    print("not float")
+a = b -(c | d)
+
+print(a)
