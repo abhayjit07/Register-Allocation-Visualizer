@@ -3,7 +3,7 @@ J = 1
 t1 = 10 * i
 t2 = t1 + J
 t3 = 8 * t2
-t4 = t3 - 88 + t1 * t2
+t4 = t3 - 88
 J = J + t4
 t8 = J < 10
 if t8 goto(3)

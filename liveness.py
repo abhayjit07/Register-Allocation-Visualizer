@@ -7,17 +7,17 @@ with open("IR.txt", "r") as f:
     IR = IR.strip().split("\n")
     # print(IR)
 
-leader = [1]
+leader = [i for i in range(1, len(IR)+1)]
 
-for i in range(len(IR)):
-    IR[i].strip()
-    if IR[i].startswith("if") or IR[i].startswith("goto"):
-        if (i+2 < len(IR)):
-            leader.append(i+2)
-        # Get the number between the brackets of goto()
-        goto_number = re.search(r'\((.*?)\)', IR[i]).group(1)
-        goto_number = int(goto_number)
-        leader.append(goto_number)
+# for i in range(len(IR)):
+#     IR[i].strip()
+#     if IR[i].startswith("if") or IR[i].startswith("goto"):
+#         if (i+2 < len(IR)):
+#             leader.append(i+2)
+#         # Get the number between the brackets of goto()
+#         goto_number = re.search(r'\((.*?)\)', IR[i]).group(1)
+#         goto_number = int(goto_number)
+#         leader.append(goto_number)
 
 
 leader = list(set(leader))
@@ -38,7 +38,11 @@ for i in range(len(leader)):
         block['block'] = (IR[leader[i]-1:])
         Blocks.append(block)
 
-# print(Blocks)
+# # beautifully print the blocks
+# for i in range(len(Blocks)):
+#     print("Block " + str(i+1) + ":")
+#     print(Blocks[i]['block'])
+#     print()
 
 
 for i in range(len(Blocks)):
@@ -54,9 +58,19 @@ for i in range(len(Blocks)):
                      Blocks[i]['flow'].append(j+1)         
     else:
         Blocks[i]['flow'] = []
+        if Blocks[i]['block'][-1].startswith("goto") or Blocks[i]['block'][-1].startswith("if"):
+            goto_number = re.search(r'\((.*?)\)', Blocks[i]['block'][-1]).group(1)
+            goto_number = int(goto_number)
+            # find the block with the goto_number as the leader
+            for j in range(len(Blocks)):
+                if Blocks[j]['leader'] == goto_number:
+                     Blocks[i]['flow'].append(j+1)
         Blocks[i]['flow'].append("exit")
 
-# print(Blocks)   
+for i in range(len(Blocks)):
+    print("Block " + str(i+1) + ":")
+    print(Blocks[i]['flow'])
+    print()
 
 
 Use = []
@@ -64,7 +78,7 @@ Def = []
 In = []
 Out = []
 
-operators = ['+', '-', '*', '/', '%', '==', '!=', '>', '<', '>=', '<=']
+operators = ['+', '-', '*', '/', '%', '==', '!=', '>', '<', '>=', '<=', '!']
 
 for i in range(len(Blocks)):
     Use.append(set())
@@ -120,12 +134,14 @@ for i in range(len(Blocks)):
                 Def[i].add(tmp_def)
             else:
                 Use[i].add(Blocks[i]['block'][j].strip())
-            
+
+print("Use: ", Use)
+print("Def: ", Def)            
 
 # IN = USE union (OUT - DEF)
 # OUT = union (IN) for successive INs
 
-# find the number of blocks
+# # find the number of blocks
 no_of_blocks = len(leader)
 
 for i in range(no_of_blocks):
