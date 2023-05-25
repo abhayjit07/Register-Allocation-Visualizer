@@ -193,7 +193,7 @@ options = {"edgecolors": "tab:gray", "node_size": 800, "alpha": 0.9}
 
 
 position = nx.spring_layout(Graph)
-nx.draw(Graph, with_labels=True, font_weight='bold', **options, pos=position)
+# nx.draw(Graph, with_labels=True, font_weight='bold', **options, pos=position)
 
 plt.savefig("interference_graph.png")
 
@@ -204,22 +204,26 @@ plt.savefig("interference_graph.png")
 
 # CHAITIN'S ALGORITHM: 
 
-def correctIR_help(line_of_insert):
-    with open("IR.ir", "r") as f:
-        lines = f.readlines()
-    for line_no in range(line_of_insert, len(lines)):
+def correctIR_help(line_of_insert, lines):
+    for line_no in range(len(lines)):
         if "goto" in lines[line_no]:
-            goto_number = re.search(r'\((.*?)\)', Blocks[i]['block'][-1]).group(1)
+            #search for the goto number in the line
+            goto_number = re.search(r'\((.*?)\)', lines[line_no]).group(1)
+            goto_number = int(goto_number)
             if goto_number >= line_of_insert:
                 goto_number += 1
-                lines[line_no] = lines[line_no].replace(re.search(r'\((.*?)\)', Blocks[i]['block'][-1]).group(1), str(goto_number))
+                lines[line_no] = lines[line_no].replace(re.search(r'\((.*?)\)', lines[line_no]).group(1), str(goto_number))
 
 def correctIR():
-    with open("IR.ir", "r") as f:
-        lines = f.readlines()
+    f = open("IR.ir", "r+")
+    lines = f.readlines()
     for line_no in range(len(lines)):
         if "load" in lines[line_no] or "store" in lines[line_no]:
-            correctIR_help(line_no)
+            correctIR_help(line_no, lines)
+    f.seek(0)
+    f.writelines(lines)
+    f.truncate()
+    f.close()
 
 
 stack = []
@@ -306,11 +310,12 @@ if not success:
         flag = False
 
         if failed_node in Use[inst['leader']-1] : 
-            print("line number: ", inst['leader'] - 1)
+            # print("line: ", Use[inst['leader']-1])
+            # print("line number: ", inst['leader'] - 1)
             line_number = inst['leader'] - 1
             load_string = "load &" + failed_node + " " + failed_node + str(count) + "\n"
-            lines.insert(line_number - 1, load_string)
-            lines[line_number + lineskip] = lines[line_number + lineskip].replace(failed_node, failed_node + str(count))
+            lines.insert(line_number + lineskip, load_string)
+            lines[line_number + lineskip + 1] = lines[line_number + lineskip + 1].replace(failed_node, failed_node + str(count))
             lineskip += 1
             flag = True
 
@@ -331,18 +336,4 @@ if not success:
     f.truncate()
     f.close()
 
-
-
-            
-            
-    
-
-
-
-
-
-
-
-
-
-
+correctIR()
