@@ -138,7 +138,7 @@ def liveness(irfilename):
     position = nx.spring_layout(Graph)
     # nx.draw(Graph, with_labels=True, font_weight='bold', **options, pos=position)
 
-    plt.savefig("interference_graph.png")
+    # plt.savefig("interference_graph.png")
 
     return Graph, Adj, Def, Use, In, Out, Blocks, nodes
 
