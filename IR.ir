@@ -1,34 +1,52 @@
 a0 = 1
-store &a a0
-b = 5
-load &a a1
-t0 = a1 < 5
+store &a (a0)
+b0 = 5
+store &b (b0)
+c0 = 10
+store &c (c0)
+d = 15
+load &a (a1)
+load &b (b1)
+k = a1 + b1
+load &c (c1)
+l = c1 + d
+load &a (a2)
+t0 = a2 < 5
 t0 = t0 == 0
-if t0 goto (24)
-t1 = b > 3
+if t0 goto (38)
+load &b (b2)
+t1 = b2 > 3
 t1 = t1 == 0
-if t1 goto (14)
-t2 = b - 1
-b = t2
-goto (18)
-t3 = b + 1
-b = t3
-goto (18)
-print (b)
-load &a a2
-t4 = a2 + 1
-a3 = t4
-store &a a3
-goto (5)
-load &a a4
-t5 = a4 + b
+if t1 goto (26)
+load &b (b3)
+t2 = b3 - 1
+b4 = t2
+store &b (b4)
+goto (31)
+load &b (b5)
+t3 = b5 + 1
+b6 = t3
+store &b (b6)
+goto (31)
+load &b (b7)
+print (b7)
+load &a (a3)
+t4 = a3 + 1
+a4 = t4
+store &a (a4)
+goto (13)
+load &a (a5)
+load &b (b8)
+t5 = a5 + b8
 t6 = t5 > 2
 t6 = t6 == 0
-if t6 goto (35)
-load &a a5
-t7 = a5 - 1
-a6 = t7
-store &a a6
-t8 = b - 1
-b = t8
-goto (24)
+if t6 goto (53)
+load &a (a6)
+t7 = a6 - 1
+a7 = t7
+store &a (a7)
+load &b (b9)
+t8 = b9 - 1
+b10 = t8
+store &b (b10)
+goto (38)

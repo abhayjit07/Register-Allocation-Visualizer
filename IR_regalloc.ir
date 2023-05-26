@@ -1,0 +1,52 @@
+r0 = 1
+store &a (r0)
+r0 = 5
+store &b (r0)
+r0 = 10
+store &c (r0)
+r0 = 15
+load &a (r0)
+load &b (r0)
+k = r2 + r1
+load &c (r0)
+l = r1 + r0
+load &a (r0)
+r0 = r0 < 5
+r0 = r0 == 0
+if r0 goto (38)
+load &b (r0)
+r0 = r0 > 3
+r0 = r0 == 0
+if r0 goto (26)
+load &b (r0)
+r0 = r0 - 1
+r0 = r0
+store &b (r0)
+goto (31)
+load &b (r0)
+r0 = r0 + 1
+r0 = r0
+store &b (r0)
+goto (31)
+load &b (r0)
+print (r0)
+load &a (r0)
+r0 = r0 + 1
+r0 = r0
+store &a (r0)
+goto (13)
+load &a (r0)
+load &b (r0)
+r0 = r1 + r0
+r0 = r0 > 2
+r0 = r0 == 0
+if r0 goto (53)
+load &a (r0)
+r0 = r0 - 1
+r0 = r0
+store &a (r0)
+load &b (r0)
+r0 = r0 - 1
+r0 = r0
+store &b (r0)
+goto (38)
