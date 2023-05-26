@@ -229,7 +229,17 @@ def regalloc(irfilename, number_of_registers):
     count = 0
     lineskip = 0
     if not success:
-        f = open(irfilename, "r+")
+        newir = irfilename.split(".")
+        if len(newir) == 2 and newir[1] == "ir":
+            #insert "changed" at 1
+            newir[1] = "changed"
+            newir.append("ir")
+        elif len(newir) == 1:
+            newir.append("changed")
+            newir.append("ir")
+        newir = ".".join(newir)
+        f = open(irfilename, "r")
+        f_new = open(newir, "w")
         lines = f.readlines()
 
         inserts = []
@@ -259,13 +269,13 @@ def regalloc(irfilename, number_of_registers):
             if flag:
                 count += 1
         
-        f.seek(0)
-        f.writelines(lines)
-        f.truncate()
-        f.close()
+        f_new.seek(0)
+        f_new.writelines(lines)
+        f_new.truncate()
+        f_new.close()
 
-        correctIR(irfilename, inserts)
-        return regalloc(irfilename, number_of_registers)
+        correctIR(newir, inserts)
+        return regalloc(newir, number_of_registers)
 
     for node in Adj:
         if node not in node_colors:
@@ -275,10 +285,13 @@ def regalloc(irfilename, number_of_registers):
     for node in node_colors:
         allocation[node] = node_colors[node]
     
-    return allocation
+    return allocation, irfilename
 
 def rewriteIR(irfilename, allocation):
-    new_irfilename = irfilename.split(".")[0] + "_regalloc.ir"
+    new_irfilename = irfilename.split(".")
+    new_irfilename[0] = new_irfilename[0] + "_regalloc"
+    new_irfilename = ".".join(new_irfilename)
+
     f_new = open(new_irfilename, "w")
     f = open(irfilename, "r")
     lines = f.readlines()
@@ -321,7 +334,7 @@ def main():
         return
     irfilename = sys.argv[1]
     number_of_registers = int(sys.argv[2])
-    allocation = regalloc(irfilename, number_of_registers)
+    allocation, irfilename = regalloc(irfilename, number_of_registers)
     print("Register allocation done")
     print(allocation)
     rewriteIR(irfilename, allocation)
