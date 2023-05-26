@@ -293,7 +293,14 @@ def rewriteIR(irfilename, allocation):
                     continue
                 if "print" in lines[line_no]:
                     lines[line_no] = lines[line_no].split(" ")
-                    lines[line_no][1] = "(" + allocation[node] + ")\n"
+                    lines[line_no][1] = lines[line_no][1].replace(node, allocation[node])
+                    lines[line_no] = " ".join(lines[line_no])
+                    continue
+                if "goto" in lines[line_no]:
+                    lines[line_no] = lines[line_no].split(" ")
+                    lines[line_no][1] = lines[line_no][1].replace(node, allocation[node])
+                    if len(lines[line_no]) > 2:
+                        lines[line_no][3] = lines[line_no][3].replace(node, allocation[node])
                     lines[line_no] = " ".join(lines[line_no])
                     continue
                 lines[line_no] = lines[line_no].replace(node, allocation[node])
@@ -309,8 +316,12 @@ def main():
     if len(sys.argv) < 2:
         print("Please provide the IR file as an argument")
         return
+    if len(sys.argv) < 3:
+        print("Please provide the number of registers as an argument")
+        return
     irfilename = sys.argv[1]
-    allocation = regalloc(irfilename, 3)
+    number_of_registers = int(sys.argv[2])
+    allocation = regalloc(irfilename, number_of_registers)
     print("Register allocation done")
     print(allocation)
     rewriteIR(irfilename, allocation)
