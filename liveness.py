@@ -266,6 +266,10 @@ def regalloc(irfilename, number_of_registers):
 
         correctIR(irfilename, inserts)
         return regalloc(irfilename, number_of_registers)
+
+    for node in Adj:
+        if node not in node_colors:
+            node_colors[node] = 'r0'
     
     allocation = {}
     for node in node_colors:
@@ -278,15 +282,13 @@ def rewriteIR(irfilename, allocation):
     f_new = open(new_irfilename, "w")
     f = open(irfilename, "r")
     lines = f.readlines()
-    #order allocations by length of variable name
     allocation = dict(sorted(allocation.items(), key=lambda item: len(item[0]), reverse = True))
-    print(allocation)
     for line_no in range(len(lines)):
         for node in allocation:
             if node in lines[line_no]:
                 if "load" in lines[line_no] or "store" in lines[line_no]:
                     lines[line_no] = lines[line_no].split(" ")
-                    lines[line_no][2] = "(" + allocation[node] + ")\n"
+                    lines[line_no][2] = lines[line_no][2].replace(node, allocation[node])
                     lines[line_no] = " ".join(lines[line_no])
                     continue
                 if "print" in lines[line_no]:

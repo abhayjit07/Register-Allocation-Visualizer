@@ -4,43 +4,47 @@ r0 = 5
 store &b (r0)
 r0 = 10
 store &c (r0)
-r0 = 15
-load &a (r0)
+r1 = 15
+load &a (r2)
 load &b (r0)
-k = r2 + r1
-load &c (r0)
-l = r1 + r0
-load &a (r0)
-r0 = r0 < 5
-r0 = r0 == 0
-if r0 goto (38)
-load &b (r0)
-r0 = r0 > 3
-r0 = r0 == 0
-if r0 goto (26)
-load &b (r0)
-r0 = r0 - 1
-r0 = r0
-store &b (r0)
-goto (31)
-load &b (r0)
-r0 = r0 + 1
-r0 = r0
-store &b (r0)
-goto (31)
-load &b (r0)
-print (r0)
-load &a (r0)
-r0 = r0 + 1
-r0 = r0
+r0 = r2 + r0
+load &c (r2)
+r1 = r2 + r1
+r0 = r0 + 5
 store &a (r0)
-goto (13)
-load &a (r0)
+r0 = r1 + 5
+store &b (r0)
+load &a (r1)
+r1 = r1 < 5
+r1 = r1 == 0
+if r1 goto (42)
+load &b (r1)
+r1 = r1 > 3
+r1 = r1 == 0
+if r1 goto (30)
+load &b (r1)
+r1 = r1 - 1
+r1 = r1
+store &b (r1)
+goto (35)
+load &b (r1)
+r1 = r1 + 1
+r1 = r1
+store &b (r1)
+goto (35)
+load &b (r1)
+print (r1)
+load &a (r1)
+r1 = r1 + 1
+r1 = r1
+store &a (r1)
+goto (16)
+load &a (r1)
 load &b (r0)
 r0 = r1 + r0
 r0 = r0 > 2
 r0 = r0 == 0
-if r0 goto (53)
+if r0 goto (57)
 load &a (r0)
 r0 = r0 - 1
 r0 = r0
@@ -49,4 +53,4 @@ load &b (r0)
 r0 = r0 - 1
 r0 = r0
 store &b (r0)
-goto (38)
+goto (42)

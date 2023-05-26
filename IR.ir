@@ -10,43 +10,47 @@ load &b (b1)
 k = a1 + b1
 load &c (c1)
 l = c1 + d
-load &a (a2)
-t0 = a2 < 5
-t0 = t0 == 0
-if t0 goto (38)
-load &b (b2)
-t1 = b2 > 3
-t1 = t1 == 0
-if t1 goto (26)
-load &b (b3)
-t2 = b3 - 1
-b4 = t2
-store &b (b4)
-goto (31)
-load &b (b5)
-t3 = b5 + 1
-b6 = t3
-store &b (b6)
-goto (31)
-load &b (b7)
-print (b7)
+a2 = k + 5
+store &a (a2)
+b2 = l + 5
+store &b (b2)
 load &a (a3)
-t4 = a3 + 1
-a4 = t4
-store &a (a4)
-goto (13)
-load &a (a5)
+t0 = a3 < 5
+t0 = t0 == 0
+if t0 goto (42)
+load &b (b3)
+t1 = b3 > 3
+t1 = t1 == 0
+if t1 goto (30)
+load &b (b4)
+t2 = b4 - 1
+b5 = t2
+store &b (b5)
+goto (35)
+load &b (b6)
+t3 = b6 + 1
+b7 = t3
+store &b (b7)
+goto (35)
 load &b (b8)
-t5 = a5 + b8
+print (b8)
+load &a (a4)
+t4 = a4 + 1
+a5 = t4
+store &a (a5)
+goto (16)
+load &a (a6)
+load &b (b9)
+t5 = a6 + b9
 t6 = t5 > 2
 t6 = t6 == 0
-if t6 goto (53)
-load &a (a6)
-t7 = a6 - 1
-a7 = t7
-store &a (a7)
-load &b (b9)
-t8 = b9 - 1
-b10 = t8
-store &b (b10)
-goto (38)
+if t6 goto (57)
+load &a (a7)
+t7 = a7 - 1
+a8 = t7
+store &a (a8)
+load &b (b10)
+t8 = b10 - 1
+b11 = t8
+store &b (b11)
+goto (42)
