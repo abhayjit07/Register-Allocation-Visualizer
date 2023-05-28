@@ -16,4 +16,4 @@ fi
 ./IR\ Generation/IR $1 -o $2
 
 #run liveness script on ir
-python Chaitin-Briggs/liveness.py $2 $3
+python3 Chaitin-Briggs/liveness.py $2 $3
