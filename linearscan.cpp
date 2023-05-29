@@ -2,7 +2,7 @@
 #include <set>
 #include <vector>
 using namespace std;
-#define R 2
+#define R 3
 // Linear Scan Register Allocation
 
 void expireOldIntervals(pair<int,int> interval, set <pair <int, int>> &active,vector<pair<int,int>>& registers);
@@ -43,16 +43,18 @@ void linearScanRegisterAllocation(set <pair <int, int>> &LiveIntervals, vector<p
 
 void expireOldIntervals(pair<int,int> interval, set <pair <int, int>> &active,vector<pair<int,int>>& registers){
     for(auto it = active.begin(); it != active.end(); it++){
+        pair<int,int> temp = *it;
         if(it->second <= interval.first){
-            active.erase(it);
+            active.erase(*it);
             for(int i=0;i<registers.size();i++){
-                if(registers[i] == *it){
+                if(registers[i] == temp){
                     registers[i] = make_pair(-1,-1);
                 }
             }
         }
     }
 }
+
 
 void spillAtInterval(pair <int, int> interval, set <pair <int, int>> &active,vector<pair<int,int>>& registers){
 
@@ -90,16 +92,13 @@ void spillAtInterval(pair <int, int> interval, set <pair <int, int>> &active,vec
 }
 
     
-
-
-
 int main(){
     
     set <pair <int, int>> LiveIntervals = {{1,3}, {2,5}, {3,10}, {4,8}, {5,7}};
     vector<pair<int,int>> registers(R, make_pair(-1,-1));
     //iterate through the set
 
-    for(auto it = LiveIntervals.begin(); it != LiveIntervals.end(); it++){
+    for (auto it = LiveIntervals.begin(); it != LiveIntervals.end(); it++){
         cout<< it -> first <<" "<< it -> second << endl;
     }
 
