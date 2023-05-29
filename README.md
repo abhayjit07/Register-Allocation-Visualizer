@@ -1,4 +1,4 @@
-# IT253-DSA-Mini-Project
+# IT251-DSA-Mini-Project
 
 ## Project Description
 
