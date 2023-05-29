@@ -19,3 +19,7 @@ NEWFILE="../$2"
 #run liveness script on ir
 cd Chaitin-Briggs
 python3 liveness.py $NEWFILE $3
+
+#run linear scan
+cd ../linear_scan
+python3 linearscan.py $NEWFILE $3
