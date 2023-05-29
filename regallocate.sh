@@ -14,6 +14,8 @@ fi
 
 #generate IR
 ./IR\ Generation/IR $1 -o $2
+NEWFILE="../$2"
 
 #run liveness script on ir
-python3 Chaitin-Briggs/liveness.py $2 $3
+cd Chaitin-Briggs
+python3 liveness.py $NEWFILE $3

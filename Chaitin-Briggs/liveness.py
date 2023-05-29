@@ -1,10 +1,25 @@
 import random
 import re
+from matplotlib.table import Table
 import networkx as nx
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from pandas.plotting import table 
 import copy
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
+
+Graph = nx.Graph()
+initial_nodes = []
+fixed_positions = {}
+nodes = []
+edges = []
+position = None
+img_count = 1
+
 
 def liveness(irfilename):
+    global Graph, nodes, edges, position, img_count, initial_nodes, fixed_positions
     f =  open(irfilename, "r")
     IR = f.read()
     IR = IR.strip().split("\n")
@@ -108,7 +123,7 @@ def liveness(irfilename):
                 else:
                     Out[j] = Out[j] | In[k-1]
 
-    Graph = nx.Graph()
+    
     Adj = {} 
 
     for block_number in range(no_of_blocks):
@@ -122,28 +137,49 @@ def liveness(irfilename):
         if node in Adj[node]:
             Adj[node].remove(node)
 
-
-    edges = []
-    nodes = []
-
     for node in Adj:
-        nodes.append(node)
+        if node not in nodes:
+            nodes.append(node)
         for neighbour in Adj[node]:
-            edges.append((node, neighbour))
+            if (node, neighbour) not in edges and (neighbour, node) not in edges:
+                edges.append((node, neighbour))
 
+    if not initial_nodes:
+        initial_nodes = nodes.copy()
+
+    Graph = nx.Graph()
     Graph.add_nodes_from(nodes)
     Graph.add_edges_from(edges)
-
-    options = {"edgecolors": "tab:gray", "node_size": 800, "alpha": 1}
+    fixed_nodes = initial_nodes.copy()
+    position = nx.circular_layout(Graph)
+    fixed_positions = {}
+    for node in fixed_nodes:
+        fixed_positions[node] = position[node]
+    options = {"edgecolors": "tab:gray", "node_size": 1000, "alpha": 1, "pos": position}
     
-    # Draw graph with title 
-    plt.figure(figsize=(7, 7))
-    plt.title("Interference Graph")
-    position = nx.spring_layout(Graph)
-    nx.draw(Graph, pos=position, with_labels=True, **options)
-    plt.savefig("Chaitin-Briggs/interference_graph.png")
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+    ax1.set_title("Chaitin-Briggs Algorithm")
+    nx.draw(Graph, with_labels=True, **options, ax=ax1)
+    ax2.set_title("Stack")
+    ax2.set_xticks([])
+    ax2.set_yticks([])
+    ax2.axis('off')
 
-    return Graph, Adj, Def, Use, In, Out, Blocks, nodes, position
+    table_data = [['Stack']]
+    cell_colors = [['tab:gray']]
+    table = ax2.table(cellText=table_data,cellColours=cell_colors, loc='center', cellLoc='center', colWidths=[0.2])
+    
+    stack_label_cell = table[0, 0]
+    stack_label_cell.set_text_props(weight='bold')
+    stack_label_cell.set_height(0.1)
+    stack_label_cell.set_fontsize(12)
+    stack_label_cell.set_text_props(color='w')
+    stack_label_cell._set_text_position((0.5, 0.5))
+    plt.savefig("images/" + str(img_count) + '.png')
+    plt.close()
+    img_count += 1
+
+    return Adj, Def, Use, In, Out, Blocks
 
 def correctIR_help(line_of_insert, lines):
     for line_no in range(len(lines)):
@@ -165,22 +201,39 @@ def correctIR(irfilename, inserts):
     f.close()
 
 def regalloc(irfilename, number_of_registers):
-    Graph, Adj, Def, Use, In, Out, Blocks, nodes, position = liveness(irfilename)
+    global Graph, position, nodes, edges, initial_nodes, fixed_positions
+    Adj, Def, Use, In, Out, Blocks = liveness(irfilename)
 
-    # Fade all nodes and edges
-    options = {"edgecolors": "tab:gray", "node_size": 800, "alpha": 1, "pos": position}
+    Graph = nx.Graph()
+    Graph.add_nodes_from(nodes)
+    Graph.add_edges_from(edges)
+    options = {"edgecolors": "tab:gray", "node_size": 1000, "alpha": 1, "pos": position}
     node_colors_array = ["tab:blue" for _ in range(len(nodes))]
     edge_colors = ["tab:red" for _ in range(len(Graph.edges()))]
     # Draw graph with title
-
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
     ax1.set_title("Interference Graph")
-    nx.draw(Graph, with_labels=True, node_color=node_colors_array, edge_color=edge_colors, **options, ax=ax1)
+    try:
+        nx.draw(Graph, with_labels=True, node_color=node_colors_array, edge_color=edge_colors, **options, ax=ax1)
+    except:
+        # print the exact cause of the error
+        print("Error in graph coloring")
+        print("Adjacency list: ", Adj)
+        print("Def: ", Def)
+        print("Use: ", Use)
+        print("In: ", In)
+        print("Out: ", Out)
+        print("Blocks: ", Blocks)
+        print("Nodes: ", nodes)
+        print("Graph: ", Graph)
+        print("Position: ", position)
+
     ax2.set_title("Stack")
     ax2.set_xticks([])
     ax2.set_yticks([])
     ax2.axis('off')
-    plt.savefig("Chaitin-Briggs/interference_graph_fade.png")
+
+    plt.savefig("interference_graph_fade.png")
     
     # TODO: live_intervals = {}
 
@@ -189,7 +242,7 @@ def regalloc(irfilename, number_of_registers):
     stack = []
     Adj_copy = copy.deepcopy(Adj)
 
-    img_count = 1
+    global img_count
 
     removed = False
 
@@ -212,18 +265,57 @@ def regalloc(irfilename, number_of_registers):
                     if neighbour in Adj_copy:
                         Adj_copy[neighbour].remove(node)
                 Adj_copy.pop(node)
-                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+
+                Graph = nx.Graph()
+                Graph.add_nodes_from(nodes)
+                Graph.add_edges_from(edges)
+
+                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
                 ax1.set_title("Chaitin-Briggs Algorithm")
                 ax2.set_title("Stack")
                 ax2.set_xticks([])
                 ax2.set_yticks([])
                 ax2.axis('off')
 
-                nx.draw(Graph, with_labels=True, node_color=node_colors_array, edge_color=edge_colors, **options, ax=ax1)
+                options = {"node_size": 1000, "alpha": 1, "pos": position}
 
-                ax2.text(0.5, 0.5, str(list(reversed(stack))), horizontalalignment='center', verticalalignment='center', fontsize=20)
+                try:
+                    nx.draw(Graph, with_labels=True, node_color=node_colors_array, edge_color=edge_colors, **options, ax=ax1)
+                except:
+                    # print the exact cause of the error
+                    print("Error in graph coloring")
+                    print("Adjacency list: ", Adj)
+                    print("Def: ", Def)
+                    print("Use: ", Use)
+                    print("In: ", In)
+                    print("Out: ", Out)
+                    print("Blocks: ", Blocks)
+                    print("Nodes: ", nodes)
+                    print("Graph: ", Graph)
+                    print("Position: ", position)
                 
-                plt.savefig("Chaitin-Briggs/images/" + str(img_count) + ".png")
+
+                # plot table in ax2 but upside down, with 'stack' at the bottom
+                table_data = [[node] for node in stack]
+                table_data.reverse()
+                table_data.append(['Stack'])
+                cell_colors = [['tab:blue'] for _ in range(len(stack))]
+                cell_colors.append(['tab:gray'])
+                # Plot table without column and row headers
+                table = ax2.table(cellText=table_data, cellColours=cell_colors, loc='center', cellLoc='center', colWidths=[0.2])
+                ax2.axis('off')
+                table.scale(1, 2)
+
+                stack_label_cell = table[(len(stack), 0)]
+                stack_label_cell.set_text_props(weight='bold')
+                stack_label_cell.set_height(0.1)
+                stack_label_cell.set_fontsize(12)
+                stack_label_cell.set_text_props(color='w')
+                stack_label_cell._set_text_position((0.5, 0.5))
+                                                             
+                plt.savefig("images/" + str(img_count) + ".png")
+                plt.close()
+                print(img_count)
                 img_count += 1
                 removed = True
 
@@ -252,6 +344,7 @@ def regalloc(irfilename, number_of_registers):
     failed_node = 'none'
 
     tmp_stack = stack.copy()
+    color_stack = []
     for node in stack:
         for color in colors:
             if color in [node_colors[new_node] for new_node in Adj[node] if new_node in New_Adj]:
@@ -264,6 +357,69 @@ def regalloc(irfilename, number_of_registers):
             print("Spilled")
             success = False
             failed_node = node
+            Graph = nx.Graph()
+            Graph.add_nodes_from(nodes)
+            Graph.add_edges_from(edges)
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+            ax1.set_title("Chaitin-Briggs Algorithm")
+            ax2.set_title("Stack")
+            ax2.set_xticks([])
+            ax2.set_yticks([])
+            ax2.axis('off')
+
+            options = {"node_size": 1000, "alpha": 1, "pos": position}
+
+            nx.draw(Graph, with_labels=True, node_color=node_colors_array, edge_color=edge_colors, **options, ax=ax1)
+
+            # plot table in ax2 but upside down, with 'stack' at the bottom
+            table_data = [[node] for node in stack]
+            table_data.reverse()
+            table_data.append(['Stack'])
+            cell_colors = [['tab:blue'] for _ in range(len(stack))]
+            cell_colors.append(['tab:gray'])
+            # Plot table without column and row headers
+            table = ax2.table(cellText=table_data, cellColours=cell_colors, loc='center', cellLoc='center', colWidths=[0.2])
+            ax2.axis('off')
+            table.scale(1, 2)
+
+            stack_label_cell = table[(len(stack), 0)]
+            stack_label_cell.set_text_props(weight='bold')
+            stack_label_cell.set_height(0.1)
+            stack_label_cell.set_fontsize(12)
+            stack_label_cell.set_text_props(color='w')
+            stack_label_cell._set_text_position((0.5, 0.5))
+
+            plt.savefig("images/" + str(img_count) + ".png")
+            plt.close()
+            img_count += 1
+
+            image_to_blur = Image.open("images/" + str(img_count - 1) + ".png")
+            
+            blurred_image = image_to_blur.filter(ImageFilter.GaussianBlur(radius=5))
+
+            draw = ImageDraw.Draw(blurred_image)
+
+            font = ImageFont.truetype("Lexend-Bold.ttf", 64)
+            text = f"Coloring Failed!\nSpilled Node: {failed_node}\n{failed_node} is spilled to the memory"
+            text_width, text_height = draw.textbbox((0, 0), text, font=font)[:2]
+            x = (blurred_image.width - text_width) // 2
+            y = (blurred_image.height - text_height) // 2
+
+            text_color = (0, 0, 0)
+
+            draw.text((x, y), text, font=font, fill=text_color)
+
+            blurred_image.save("images/" + str(img_count - 1) + ".png")
+
+
+            nodes.remove(node)
+            initial_nodes.remove(node)
+            tmp_stack.remove(node)
+            edge_copy = edges.copy()
+            for edge in edges:
+                if failed_node in edge:
+                    edge_copy.remove(edge)
+            edges = edge_copy
             break
         
         New_Adj[node] = set()
@@ -273,7 +429,14 @@ def regalloc(irfilename, number_of_registers):
                 New_Adj[node].add(new_node)
                 New_Adj[new_node].add(node)
         
-        # increase alpha of the appended node and its edges
+        Graph = nx.Graph()
+        Graph.add_nodes_from(nodes)
+        new_edges = edges.copy()
+        for edge in new_edges:
+            if failed_node in edge:
+                new_edges.remove(edge)
+        Graph.add_edges_from(new_edges)
+        
         color = node_colors[node]
         node_colors_array[nodes.index(node)] = color_map[color]
         for neighbour in Adj[node]:
@@ -281,34 +444,77 @@ def regalloc(irfilename, number_of_registers):
                 edge_colors[list(Graph.edges()).index((node, neighbour))] = 'tab:gray'
             except:
                 edge_colors[list(Graph.edges()).index((neighbour, node))] = 'tab:gray'
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 6))
+        fig.subplots_adjust(wspace=0)
+        
         ax1.set_title("Chaitin-Briggs Algorithm")
         ax2.set_title("Stack")
-        ax2.set_xticks([])
-        ax2.set_yticks([])
+        ax3.set_title("Popped Nodes")
+
+        try:
+            nx.draw(Graph, with_labels=True, node_color=node_colors_array, edge_color=edge_colors, **options, ax=ax1)
+        except:
+            # print the exact cause of the error
+            print("Error in graph coloring")
+            print("Adjacency list: ", Adj)
+            print("Def: ", Def)
+            print("Use: ", Use)
+            print("In: ", In)
+            print("Out: ", Out)
+            print("Blocks: ", Blocks)
+            print("Nodes: ", nodes)
+            print("Graph: ", Graph)
+            print("Position: ", position)
+
+        fig.subplots_adjust(left=0, right=1)
+
+        # Get the x and y limits of the graph plot
+        x_limits = ax1.get_xlim()
+        y_limits = ax1.get_ylim()
+
+        # Increase the plot limits by a margin (adjust as needed)
+        x_margin = 0.1
+        y_margin = 0.1
+        ax1.set_xlim(x_limits[0] - x_margin, x_limits[1] + x_margin)
+        ax1.set_ylim(y_limits[0] - y_margin, y_limits[1] + y_margin)
+
+        color_stack.append(tmp_stack.pop(0))
+
+
+        # plot table in ax2 but upside down, with 'stack' at the bottom
+        table_data = [[node] for node in tmp_stack]
+        table_data.append(['Stack'])
+        cell_colors = [['tab:blue'] for _ in range(len(tmp_stack))]
+        cell_colors.append(['tab:gray'])
+        # Plot table without column and row headers
+        table = ax2.table(cellText=table_data, cellColours=cell_colors, loc='center', cellLoc='center', colWidths=[0.2])
         ax2.axis('off')
+        table.scale(1, 2)
 
-        nx.draw(Graph, with_labels=True, node_color=node_colors_array, edge_color=edge_colors, **options, ax=ax1)
+        stack_label_cell = table[(len(tmp_stack), 0)]
+        stack_label_cell.set_text_props(weight='bold')
+        stack_label_cell.set_height(0.1)
+        stack_label_cell.set_fontsize(12)
+        stack_label_cell.set_text_props(color='w')
+        stack_label_cell._set_text_position((0.5, 0.5))
 
-        tmp_stack.pop(0)
+        popped_table_data = [[node] for node in color_stack]
+        # Remove borders and spaces between columns
+        ax3.axis('off')
+        popped_colors = [[color_map[node_colors[node]]] for node in color_stack]
+        table3 = ax3.table(cellText=popped_table_data, cellColours=popped_colors, loc='center', cellLoc='center', colWidths=[0.2])
+        table3.scale(1, 2)
 
-        ax2.text(0.5, 0.5, str(tmp_stack), horizontalalignment='center', verticalalignment='center', fontsize=20)
+        plt.savefig("images/" + str(img_count) + ".png")
+        plt.close()
         print(img_count)
-        plt.savefig("Chaitin-Briggs/images/" + str(img_count) + ".png")
         img_count += 1
 
     count = 0
     lineskip = 0
     if not success:
-        newir = irfilename.split(".")
-        if len(newir) == 2 and newir[1] == "ir":
-            #insert "changed" at 1
-            newir[1] = "changed"
-            newir.append("ir")
-        elif len(newir) == 1:
-            newir.append("changed")
-            newir.append("ir")
-        newir = ".".join(newir)
+        newir = irfilename
+        newir = newir + ".changed"
         f = open(irfilename, "r")
         f_new = open(newir, "w")
         lines = f.readlines()
@@ -359,9 +565,8 @@ def regalloc(irfilename, number_of_registers):
     return allocation, irfilename
 
 def rewriteIR(irfilename, allocation):
-    new_irfilename = irfilename.split(".")
-    new_irfilename[0] = new_irfilename[0] + "_regalloc"
-    new_irfilename = ".".join(new_irfilename)
+    new_irfilename = irfilename
+    new_irfilename = new_irfilename + ".regalloc"
 
     f_new = open(new_irfilename, "w")
     f = open(irfilename, "r")
@@ -396,18 +601,25 @@ def rewriteIR(irfilename, allocation):
 import sys
 import imageio.v2 as imageio
 import os
+
 def createGif():
     images_names = []
     images = []
-    for image in os.listdir("Chaitin-Briggs/images"):
+    for image in os.listdir("images"):
         images_names.append(image)
 
     images_names.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
     for image in images_names:
-        images.append(imageio.imread("Chaitin-Briggs/images/" + image))
-    imageio.mimsave('Chaitin-Briggs/Chaitin-Briggs.gif', images, duration=len(images)*100)
+        images.append(imageio.imread("images/" + image))
+        
+    imageio.mimsave('Chaitin-Briggs.gif', images, duration=40*len(images))
 
 def main():
+    global Graph
+
+    # REmove all images in the images folder
+    for image in os.listdir("images"):
+        os.remove("images/" + image)
     print(sys.argv)
     if len(sys.argv) < 2:
         print("Please provide the IR file as an argument")
