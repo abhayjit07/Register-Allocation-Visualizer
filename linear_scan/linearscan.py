@@ -176,6 +176,9 @@ def liveness(irfilename):
     live_ranges = extract_liveranges(nodes, In, Out, Blocks)
     return live_ranges
 
+import matplotlib.pyplot as plt
+
+
 def expireOldIntervals(interval, active, registers):
     for i in active.copy():
         if i[1] <= interval[0]:
@@ -184,19 +187,20 @@ def expireOldIntervals(interval, active, registers):
                 if reg == i:
                     registers[j] = (-1, -1)
 
-def displayRegisters(registers):
+def displayRegisters(registers, dick):
     for i, reg in enumerate(registers):
-        print(f"Register {i+1} contains {reg[0]} {reg[1]}")
+        variable = next((key for key, value in dick.items() if value == (reg[0], reg[1])), 'NONE')
+        print(f"Register {i+1} contains variable {variable} (live interval: {dick[variable][0]}-{dick[variable][1]})")
     print()
 
-def linearScanRegisterAllocation(LiveIntervals, registers):
+def linearScanRegisterAllocation(LiveIntervals, registers, dick):
     active = set()
 
     for interval in LiveIntervals:
         expireOldIntervals(interval, active, registers)
 
         if len(active) == R:
-            spillAtInterval(interval, active, registers)
+            spillAtInterval(interval, active, registers, dick)
         else:
             for i, reg in enumerate(registers):
                 if reg == (-1, -1):
@@ -204,9 +208,9 @@ def linearScanRegisterAllocation(LiveIntervals, registers):
                     active.add(interval)
                     break
 
-        displayRegisters(registers)
+        displayRegisters(registers, dick)
 
-def spillAtInterval(interval, active, registers):
+def spillAtInterval(interval, active, registers, dick):
     max_end = interval[1]
     flag = False
     spill_interval = interval
@@ -219,7 +223,8 @@ def spillAtInterval(interval, active, registers):
 
     if flag:
         active.remove(spill_interval)
-        print(f"Spilled {spill_interval[0]} {spill_interval[1]} to memory")
+        variable = next((key for key, value in dick.items() if value == (spill_interval[0], spill_interval[1])), 'NONE')
+        print(f"Spilled variable {variable} to memory")
         index = -1
         for j, reg in enumerate(registers):
             if reg == spill_interval:
@@ -229,9 +234,11 @@ def spillAtInterval(interval, active, registers):
         active.add(interval)
         registers[index] = interval
     else:
-        print(f"Spilled {interval[0]} {interval[1]} to memory")
+        variable = next((key for key, value in dick.items() if value == (spill_interval[0], spill_interval[1])), 'NONE')
+        print(f"Spilled variable {variable} to memory")
 
 if __name__ == "__main__":
+
     live_ranges = liveness(sys.argv[1])
     print(live_ranges)
 
@@ -247,9 +254,10 @@ if __name__ == "__main__":
 
     #read number of registers from arguments
     R = int(sys.argv[2])
+
     registers = [(-1, -1)] * R
 
     for interval in LiveIntervals:
         print(interval[0], interval[1])
 
-    linearScanRegisterAllocation(LiveIntervals, registers)
+    linearScanRegisterAllocation(LiveIntervals, registers, dick)
