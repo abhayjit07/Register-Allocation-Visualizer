@@ -1,1 +1,0 @@
-#nah refer linearscan.py
