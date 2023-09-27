@@ -1,15 +1,34 @@
-# IT251-DSA-Mini-Project
+# IT251-DSA-Mini-Project: Register Allocator
 
 ## Project Description
 
-The Register Allocator project is a sophisticated tool designed to optimize the allocation of registers for variables in a computer program. By leveraging graph coloring techniques and implementing Chaitin's Briggs algorithm and Linear Scan, this project aims to minimize register spills to memory and improve overall program performance.
+The Register Allocator project is a powerful tool designed to optimize register allocation for variables in computer programs. Utilizing graph coloring techniques and implementing Chaitin's Briggs algorithm and Linear Scan, this project aims to reduce register spills to memory and enhance overall program performance.
 
 ![colored_int_graph](https://github.com/Vignaraj-pai/Register-Allocation-Visualizer/assets/93054118/b607e0a6-5204-49ec-9d28-6ac02546c653)
 
-Register allocation plays a crucial role in optimizing the execution of programs by efficiently managing limited hardware registers. When the number of variables in a program exceeds the available registers, the compiler needs to decide which variables should reside in registers at any given point during execution. This decision significantly impacts the performance and efficiency of the program.
+## Introduction
 
-This project employs graph coloring algorithms, which model variable dependencies as a graph, where nodes represent variables and edges represent dependencies between them. Graph coloring assigns different colors (representing registers) to nodes (variables) in a way that no adjacent nodes share the same color. By using this approach, the register allocator can minimize the need for spilling variables to memory, reducing costly memory access operations and improving program execution speed.
+Register allocation is a critical aspect of program optimization, managing the allocation of hardware registers efficiently. When the number of variables in a program exceeds the available registers, compilers must decide which variables should reside in registers during execution. This decision significantly impacts program performance and efficiency.
 
-Chaitin's Briggs algorithm is a well-known graph coloring algorithm that prioritizes register allocation based on the variables' liveness and interference. It efficiently allocates registers by taking into account the live ranges of variables and minimizing conflicts between them. This algorithm provides an effective way to assign registers to variables, ensuring optimal performance.
+This project employs graph coloring algorithms, representing variable dependencies as a graph, where nodes represent variables and edges represent dependencies. Graph coloring assigns different colors (representing registers) to nodes (variables) to ensure that adjacent nodes do not share the same color. This approach minimizes the need for spilling variables to memory, reducing memory access operations and improving program execution speed.
 
-In addition to Chaitin's Briggs algorithm, this project also implements the Linear Scan algorithm. Linear Scan is a linear-time algorithm that allocates registers by scanning the program's variables in a specific order. It identifies live ranges and assigns registers accordingly, efficiently utilizing available registers.
+## Implemented Algorithms
+
+### 1. Chaitin's Briggs Algorithm
+
+Chaitin's Briggs algorithm is a well-known graph coloring algorithm. It prioritizes register allocation based on variable liveness and interference. By considering variable live ranges and minimizing conflicts between them, this algorithm efficiently allocates registers, ensuring optimal performance.
+
+### 2. Linear Scan Algorithm
+
+The Linear Scan algorithm is another implemented approach. It allocates registers by scanning program variables in a specific order, identifying live ranges, and assigning registers accordingly. This linear-time algorithm efficiently utilizes available registers.
+
+
+## Contributors
+
+- [Vignaraj Pai](https://github.com/Vignaraj-pai)
+- [Srinvasa R](https://github.com/Wolfram70)
+- [Abhishek Sathpaty](https://github.com/AbhishekSatpathy4848)
+- [Sachin Prasanna](https://github.com/sachinprasanna7)
+- [Abhayjit Singh Gulati](https://github.com/abhayjit07)
+
+
